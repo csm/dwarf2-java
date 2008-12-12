@@ -1,13 +1,24 @@
 /* Dwarf2NameFinder.java -- decodes the DWARF-2 debug_line section.
-   Copyright (C) 2005  Free Software Foundation, Inc.
+   Copyright (C) 2005, 2008  Casey Marshall.
 
-   This file is part of libgcj.
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
 
-This software is copyrighted work licensed under the terms of the
-Libgcj License.  Please consult the file "LIBGCJ_LICENSE" for
-details.  */
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
 
-// Written by Casey Marshall <csm@gnu.org>
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 
 
 package dwarf2;
@@ -127,21 +138,21 @@ public class Dwarf2NameFinder
         dw2 = SectionFinder.mapSection (binaryFile, DEBUG_LINE);
         this.binaryFile = binaryFile;
 
-	Runtime r = Runtime.getRuntime ();
-	System.out.println ("mem free = " + r.freeMemory () + " total = " + r.totalMemory ());
-	System.out.print ("Scanning " + binaryFile + "...");
-	long now = -System.currentTimeMillis ();
-	scan ();
-	now += System.currentTimeMillis ();
-	System.out.println ("done");
-	System.out.println ("scanned " + cache.size () + " compilation units in " + now + " nss");
-	System.gc ();
-	System.out.println ("mem free = " + r.freeMemory () + " total = " + r.totalMemory ());
-	System.err.println (cache);
+		Runtime r = Runtime.getRuntime ();
+		System.out.println ("mem free = " + r.freeMemory () + " total = " + r.totalMemory ());
+		System.out.print ("Scanning " + binaryFile + "...");
+		long now = -System.currentTimeMillis ();
+		scan ();
+		now += System.currentTimeMillis ();
+		System.out.println ("done");
+		System.out.println ("scanned " + cache.size () + " compilation units in " + now + " nss");
+		System.gc ();
+		System.out.println ("mem free = " + r.freeMemory () + " total = " + r.totalMemory ());
+		System.err.println (cache);
       }
     catch (IOException ioe)
       {
-	if (Configuration.DEBUG)
+		if (Configuration.DEBUG)
           logger.log (DEBUG, "can''t map .debug_line in {0}: {1}", new Object[]
             { binaryFile, ioe.getMessage () });
         dw2 = null;
@@ -175,9 +186,9 @@ public class Dwarf2NameFinder
     CacheEntry e = (CacheEntry) cache.get (target);
     if (e != null)
       {
-	System.out.println ("got cache entry " + e);
-	if (interpret (target, e.section, e.fileNames, e.header, false))
-	  return;
+		System.out.println ("got cache entry " + e);
+		if (interpret (target, e.section, e.fileNames, e.header, false))
+		  return;
       }
 
     dw2.position (0);
@@ -191,19 +202,19 @@ public class Dwarf2NameFinder
         final int begin = dw2.position ();
         dw2_debug_line header = new dw2_debug_line ();
         header.get (dw2);
-	if (Configuration.DEBUG)
+		if (Configuration.DEBUG)
           logger.log (DEBUG, "read debug_line header: {0}", header);
         final int end = (int) (begin + header.total_length + 4);
         final int prologue_end = (int) (begin + header.prologue_length + 9);
 
-	if (Configuration.DEBUG)
+		if (Configuration.DEBUG)
           logger.log (DEBUG, "this section starts at {0}, ends at {1}, and the prologue ends at {2}",
                       new Object[] { new Integer (begin), new Integer (end),
                                      new Integer (prologue_end) });
 
         if (header.version != 2 || header.opcode_base != 10)
           {
-	    if (Configuration.DEBUG)
+			if (Configuration.DEBUG)
               logger.log (DEBUG, "skipping this section; not DWARF-2 (version={0}, opcode_base={1})",
                           new Object[] { new Integer (header.version),
                                          new Integer (header.opcode_base) });
@@ -246,13 +257,13 @@ public class Dwarf2NameFinder
         dw2.limit (dw2.capacity ());
         dw2.position (end);
 
-	if (interpret (target, section, fnames, header, scan_only))
-	  break;
+		if (interpret (target, section, fnames, header, scan_only))
+		  break;
       }
   }
 
   private boolean interpret (long target, ByteBuffer section, LinkedList fnames,
-			     dw2_debug_line header, boolean scan_only)
+							 dw2_debug_line header, boolean scan_only)
   {
     long address = 0;
     long base_address = 0;
@@ -271,239 +282,239 @@ public class Dwarf2NameFinder
 
     interpret: while (section.hasRemaining ())
       {
-	int opcode = section.get () & 0xFF;
+		int opcode = section.get () & 0xFF;
 
-	if (opcode < header.opcode_base)
-	  {
-	    switch (opcode)
-	      {
-	      case DW_LNS_extended_op:
-		{
-		  long insn_len = getUleb128 (section);
-		  opcode = section.get ();
-		  if (Configuration.DEBUG)
-		    logger.log (DEBUG, "special opcode {0}, insn_len={1}",
-				new Object[] { new Integer (opcode), new Long (insn_len) });
-
-		  switch (opcode)
-		    {
-		    case DW_LNE_end_sequence:
-		      if (Configuration.DEBUG)
-			logger.log (DEBUG, "End of sequence");
-		      if (!scan_only && (base_address <= target && address > target))
-			{
-			  lineNumber = prev_lineno;
-			  sourceFile = (String) ((prev_fileno >= 0 && prev_fileno < fnames.size ())
-						 ? fnames.get (prev_fileno) : define_file);
-			  logger.log (DEBUG, "found {0}:{1} for {2}", new Object[]
-			    { sourceFile, new Integer (lineNumber), Long.toHexString (target) });
-
-			  cache.put (base_address, address,
-				     new CacheEntry (fnames, section, header));
-
-			  return true;
-			}
-
-		      if (scan_only && min_address != -1 && max_address != 0)
-			{
-			  cache.put (min_address, max_address,
-				     new CacheEntry (fnames, section, header));
-			  min_address = -1;
-			  max_address = 0;
-			}
-
-		      prev_lineno = lineno = 1;
-		      prev_fileno = fileno = 0;
-		      base_address = address = 0;
-		      break;
-
-		    case DW_LNE_set_address:
-		      base_address = section.get () & 0xFF;
-		      base_address |= (section.get () & 0xFFL) << 8;
-		      base_address |= (section.get () & 0xFFL) << 16;
-		      base_address |= (section.get () & 0xFFL) << 24;
-		      address = base_address;
-		      if (Configuration.DEBUG)
-			logger.log (DEBUG, "Set address to 0x{0}", Long.toHexString (address));
-
-		      // XXX this might not be correct, as there can be more
-		      // than one of these instructions in a single compilation
-		      // unit.
-		      if (!scan_only && address > target)
-			{
-			  if (Configuration.DEBUG)
-			    logger.log (DEBUG, "not in this unit base=0x{0}, target=0x{1}",
-					new Object[] { Long.toHexString (address),
-						       Long.toHexString (target) });
-			  return false;
-			}
-		      break;
-
-		    case DW_LNE_define_file:
-		      define_file = getString (section);
-		      if (Configuration.DEBUG)
-			logger.log (DEBUG, "Define file: {0}", define_file);
-		      getUleb128 (section);
-		      getUleb128 (section);
-		      getUleb128 (section);
-		      break;
-
-		    default:
-		      if (Configuration.DEBUG)
-			logger.log (DEBUG, "Unsupported extended opcode {0}",
-				    new Integer (opcode));
-		      section.position (section.position () + (int) insn_len);
-		      break;
-		    }
-
-		}
-	      case DW_LNS_copy:
-		if (Configuration.DEBUG)
-		  logger.log (DEBUG, "Copy");
-		if (!scan_only && (base_address <= target && address > target))
+		if (opcode < header.opcode_base)
 		  {
-		    lineNumber = prev_lineno;
-		    sourceFile = (String) ((prev_fileno >= 0 && prev_fileno < fnames.size ())
-					   ? fnames.get (prev_fileno) : define_file);
-		    logger.log (DEBUG, "found {0}:{1} for {2}", new Object[]
-		      { sourceFile, new Integer (lineNumber), Long.toHexString (target) });
+			switch (opcode)
+			  {
+			  case DW_LNS_extended_op:
+				{
+				  long insn_len = getUleb128 (section);
+				  opcode = section.get ();
+				  if (Configuration.DEBUG)
+					logger.log (DEBUG, "special opcode {0}, insn_len={1}",
+								new Object[] { new Integer (opcode), new Long (insn_len) });
 
-		    cache.put (base_address, address,
-			       new CacheEntry (fnames, section, header));
+				  switch (opcode)
+					{
+					case DW_LNE_end_sequence:
+					  if (Configuration.DEBUG)
+						logger.log (DEBUG, "End of sequence");
+					  if (!scan_only && (base_address <= target && address > target))
+						{
+						  lineNumber = prev_lineno;
+						  sourceFile = (String) ((prev_fileno >= 0 && prev_fileno < fnames.size ())
+												 ? fnames.get (prev_fileno) : define_file);
+						  logger.log (DEBUG, "found {0}:{1} for {2}", new Object[]
+							{ sourceFile, new Integer (lineNumber), Long.toHexString (target) });
 
-		    return true;
+						  cache.put (base_address, address,
+									 new CacheEntry (fnames, section, header));
+
+						  return true;
+						}
+
+					  if (scan_only && min_address != -1 && max_address != 0)
+						{
+						  cache.put (min_address, max_address,
+									 new CacheEntry (fnames, section, header));
+						  min_address = -1;
+						  max_address = 0;
+						}
+
+					  prev_lineno = lineno = 1;
+					  prev_fileno = fileno = 0;
+					  base_address = address = 0;
+					  break;
+
+					case DW_LNE_set_address:
+					  base_address = section.get () & 0xFF;
+					  base_address |= (section.get () & 0xFFL) << 8;
+					  base_address |= (section.get () & 0xFFL) << 16;
+					  base_address |= (section.get () & 0xFFL) << 24;
+					  address = base_address;
+					  if (Configuration.DEBUG)
+						logger.log (DEBUG, "Set address to 0x{0}", Long.toHexString (address));
+
+					  // XXX this might not be correct, as there can be more
+					  // than one of these instructions in a single compilation
+					  // unit.
+					  if (!scan_only && address > target)
+						{
+						  if (Configuration.DEBUG)
+							logger.log (DEBUG, "not in this unit base=0x{0}, target=0x{1}",
+										new Object[] { Long.toHexString (address),
+													   Long.toHexString (target) });
+						  return false;
+						}
+					  break;
+
+					case DW_LNE_define_file:
+					  define_file = getString (section);
+					  if (Configuration.DEBUG)
+						logger.log (DEBUG, "Define file: {0}", define_file);
+					  getUleb128 (section);
+					  getUleb128 (section);
+					  getUleb128 (section);
+					  break;
+
+					default:
+					  if (Configuration.DEBUG)
+						logger.log (DEBUG, "Unsupported extended opcode {0}",
+									new Integer (opcode));
+					  section.position (section.position () + (int) insn_len);
+					  break;
+					}
+
+				}
+			  case DW_LNS_copy:
+				if (Configuration.DEBUG)
+				  logger.log (DEBUG, "Copy");
+				if (!scan_only && (base_address <= target && address > target))
+				  {
+					lineNumber = prev_lineno;
+					sourceFile = (String) ((prev_fileno >= 0 && prev_fileno < fnames.size ())
+										   ? fnames.get (prev_fileno) : define_file);
+					logger.log (DEBUG, "found {0}:{1} for {2}", new Object[]
+					  { sourceFile, new Integer (lineNumber), Long.toHexString (target) });
+
+					cache.put (base_address, address,
+							   new CacheEntry (fnames, section, header));
+
+					return true;
+				  }
+				prev_lineno = lineno;
+				prev_fileno = fileno;
+				break;
+
+			  case DW_LNS_advance_pc:
+				{
+				  long amt = getUleb128 (section);
+				  address += amt * header.minimum_instruction_length;
+				  if (scan_only)
+					{
+					  if (ucomp (min_address, address) > 0)
+						min_address = address;
+					  if (ucomp (max_address, address) < 0)
+						max_address = address;
+					}
+				  if (Configuration.DEBUG)
+					logger.log (DEBUG, "Advance PC by {0} to 0x{1}",
+								new Object[] { new Long (amt),
+											   Long.toHexString (address) });
+				}
+				break;
+
+			  case DW_LNS_advance_line:
+				{
+				  long amt = getSleb128 (section);
+				  prev_lineno = lineno;
+				  lineno += (int) amt;
+				  if (Configuration.DEBUG)
+					logger.log (DEBUG, "Advance line by {0} to {1}", new Object[]
+					  { new Long (amt), new Integer (lineno) });
+				}
+				break;
+
+			  case DW_LNS_set_file:
+				prev_fileno = fileno;
+				fileno = (int) getUleb128 (section) - 1;
+				if (Configuration.DEBUG)
+				  logger.log (DEBUG, "Set file to {0}", new Integer (fileno));
+				break;
+
+			  case DW_LNS_set_column:
+				getUleb128 (section);
+				if (Configuration.DEBUG)
+				  logger.log (DEBUG, "Set column (ignored)");
+				break;
+
+			  case DW_LNS_negate_stmt:
+				if (Configuration.DEBUG)
+				  logger.log (DEBUG, "Negate statement (ignored)");
+				break;
+
+			  case DW_LNS_set_basic_block:
+				if (Configuration.DEBUG)
+				  logger.log (DEBUG, "Set basic block (ignored)");
+				break;
+
+			  case DW_LNS_const_add_pc:
+				address += const_pc_add;
+				if (scan_only)
+				  {
+					if (ucomp (min_address, address) > 0)
+					  min_address = address;
+					if (ucomp (max_address, address) < 0)
+					  max_address = address;
+				  }
+				if (Configuration.DEBUG)
+				  logger.log (DEBUG, "Advance PC by (constant) {0} to 0x{1}",
+							  new Object[] { new Integer (const_pc_add),
+											 Long.toHexString (address) });
+				break;
+
+			  case DW_LNS_fixed_advance_pc:
+				{
+				  int amt = section.getShort () & 0xFFFF;
+				  address += amt;
+				  if (Configuration.DEBUG)
+					logger.log (DEBUG, "Advance PC by (fixed) {0} to 0x{1}",
+								new Object[] { new Integer (amt),
+											   Long.toHexString (address) });
+				}
+				break;
+			  }
 		  }
-		prev_lineno = lineno;
-		prev_fileno = fileno;
-		break;
-
-	      case DW_LNS_advance_pc:
-		{
-		  long amt = getUleb128 (section);
-		  address += amt * header.minimum_instruction_length;
-		  if (scan_only)
-		    {
-		      if (ucomp (min_address, address) > 0)
-			min_address = address;
-		      if (ucomp (max_address, address) < 0)
-			max_address = address;
-		    }
-		  if (Configuration.DEBUG)
-		    logger.log (DEBUG, "Advance PC by {0} to 0x{1}",
-				new Object[] { new Long (amt),
-					       Long.toHexString (address) });
-		}
-		break;
-
-	      case DW_LNS_advance_line:
-		{
-		  long amt = getSleb128 (section);
-		  prev_lineno = lineno;
-		  lineno += (int) amt;
-		  if (Configuration.DEBUG)
-		    logger.log (DEBUG, "Advance line by {0} to {1}", new Object[]
-		      { new Long (amt), new Integer (lineno) });
-		}
-		break;
-
-	      case DW_LNS_set_file:
-		prev_fileno = fileno;
-		fileno = (int) getUleb128 (section) - 1;
-		if (Configuration.DEBUG)
-		  logger.log (DEBUG, "Set file to {0}", new Integer (fileno));
-		break;
-
-	      case DW_LNS_set_column:
-		getUleb128 (section);
-		if (Configuration.DEBUG)
-		  logger.log (DEBUG, "Set column (ignored)");
-		break;
-
-	      case DW_LNS_negate_stmt:
-		if (Configuration.DEBUG)
-		  logger.log (DEBUG, "Negate statement (ignored)");
-		break;
-
-	      case DW_LNS_set_basic_block:
-		if (Configuration.DEBUG)
-		  logger.log (DEBUG, "Set basic block (ignored)");
-		break;
-
-	      case DW_LNS_const_add_pc:
-		address += const_pc_add;
-		if (scan_only)
+		else
 		  {
-		    if (ucomp (min_address, address) > 0)
-		      min_address = address;
-		    if (ucomp (max_address, address) < 0)
-		      max_address = address;
+			int adj = (opcode & 0xFF) - header.opcode_base;
+			int addr_adv = adj / header.line_range;
+			int line_adv = header.line_base + (adj % header.line_range);
+			long new_addr = address + addr_adv;
+			int new_line = lineno + line_adv;
+			if (Configuration.DEBUG)
+			  logger.log (DEBUG,
+						  "Special opcode {0} advance line by {1} to {2} and address by {3} to 0x{4}",
+						  new Object[] { new Integer (opcode & 0xFF),
+										 new Integer (line_adv),
+										 new Integer (new_line),
+										 new Integer (addr_adv),
+										 Long.toHexString (new_addr) });
+			if (!scan_only && base_address <= target && new_addr >= target)
+			  {
+				lineNumber = new_addr == target ? new_line : lineno;
+				sourceFile = (String) ((fileno >= 0 && fileno < fnames.size ())
+									   ? fnames.get (fileno) : define_file);
+				logger.log (DEBUG, "found {0}:{1} for {2}", new Object[]
+				  { sourceFile, new Integer (lineNumber), Long.toHexString (target) });
+
+				cache.put (base_address, new_addr,
+						   new CacheEntry (fnames, section, header));
+
+				return true;
+			  }
+
+			prev_lineno = lineno;
+			prev_fileno = fileno;
+			lineno = new_line;
+			address = new_addr;
+			if (scan_only)
+			  {
+				if (ucomp (min_address, address) > 0)
+				  min_address = address;
+				if (ucomp (max_address, address) < 0)
+				  max_address = address;
+			  }
 		  }
-		if (Configuration.DEBUG)
-		  logger.log (DEBUG, "Advance PC by (constant) {0} to 0x{1}",
-			      new Object[] { new Integer (const_pc_add),
-					     Long.toHexString (address) });
-		break;
-
-	      case DW_LNS_fixed_advance_pc:
-		{
-		  int amt = section.getShort () & 0xFFFF;
-		  address += amt;
-		  if (Configuration.DEBUG)
-		    logger.log (DEBUG, "Advance PC by (fixed) {0} to 0x{1}",
-				new Object[] { new Integer (amt),
-					       Long.toHexString (address) });
-		}
-		break;
-	      }
-	  }
-	else
-	  {
-	    int adj = (opcode & 0xFF) - header.opcode_base;
-	    int addr_adv = adj / header.line_range;
-	    int line_adv = header.line_base + (adj % header.line_range);
-	    long new_addr = address + addr_adv;
-	    int new_line = lineno + line_adv;
-	    if (Configuration.DEBUG)
-	      logger.log (DEBUG,
-			  "Special opcode {0} advance line by {1} to {2} and address by {3} to 0x{4}",
-			  new Object[] { new Integer (opcode & 0xFF),
-					 new Integer (line_adv),
-					 new Integer (new_line),
-					 new Integer (addr_adv),
-					 Long.toHexString (new_addr) });
-	    if (!scan_only && base_address <= target && new_addr >= target)
-	      {
-		lineNumber = new_addr == target ? new_line : lineno;
-		sourceFile = (String) ((fileno >= 0 && fileno < fnames.size ())
-				       ? fnames.get (fileno) : define_file);
-		logger.log (DEBUG, "found {0}:{1} for {2}", new Object[]
-		  { sourceFile, new Integer (lineNumber), Long.toHexString (target) });
-
-		cache.put (base_address, new_addr,
-			   new CacheEntry (fnames, section, header));
-
-		return true;
-	      }
-
-	    prev_lineno = lineno;
-	    prev_fileno = fileno;
-	    lineno = new_line;
-	    address = new_addr;
-	    if (scan_only)
-	      {
-		if (ucomp (min_address, address) > 0)
-		  min_address = address;
-		if (ucomp (max_address, address) < 0)
-		  max_address = address;
-	      }
-	  }
       }
 
     if (scan_only)
       {
-	if (min_address != -1 && max_address != 0)
-	  cache.put (min_address, max_address,
-		     new CacheEntry (fnames, section, header));
+		if (min_address != -1 && max_address != 0)
+		  cache.put (min_address, max_address,
+					 new CacheEntry (fnames, section, header));
       }
     return false;
   }
@@ -598,25 +609,25 @@ public class Dwarf2NameFinder
 
     if (l1 < 0)
       {
-	if (l2 < 0)
-	  {
-	    if (l1 < l2)
-	      return 1;
-	    else
-	      return -1;
-	  }
-	return 1;
+		if (l2 < 0)
+		  {
+			if (l1 < l2)
+			  return 1;
+			else
+			  return -1;
+		  }
+		return 1;
       }
     else
       {
-	if (l2 >= 0)
-	  {
-	    if (l1 < l2)
-	      return -1;
-	    else
-	      return 1;
-	  }
-	return -1;
+		if (l2 >= 0)
+		  {
+			if (l1 < l2)
+			  return -1;
+			else
+			  return 1;
+		  }
+		return -1;
       }
   }
 }

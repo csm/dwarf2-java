@@ -1,13 +1,24 @@
 /* SectionFinderELF32.java -- finds sections by name in 32-bit ELF files.
-   Copyright (C) 2005  Free Software Foundation, Inc.
+   Copyright (C) 2005, 2008  Casey Marshall
 
-   This file is part of libgcj.
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
 
-This software is copyrighted work licensed under the terms of the
-Libgcj License.  Please consult the file "LIBGCJ_LICENSE" for
-details.  */
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
 
-// Written by Casey Marshall <csm@gnu.org>
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 
 
 package dwarf2;
@@ -98,11 +109,11 @@ class SectionFinder
       java.lang.StringBuffer str = new java.lang.StringBuffer (super.toString ());
       str.append (" [ e_ident: ");
       for (int i = 0; i < EI_NIDENT; i++)
-	{
-	  if (e_ident[i] < 0x10 && e_ident[i] >= 0)
-	    str.append ('0');
-	  str.append (Integer.toHexString (e_ident[i] & 0xFF));
-	}
+		{
+		  if (e_ident[i] < 0x10 && e_ident[i] >= 0)
+			str.append ('0');
+		  str.append (Integer.toHexString (e_ident[i] & 0xFF));
+		}
       str.append ("; e_type: ").append (e_type & 0xFFFF);
       str.append ("; e_machine: ").append (e_machine & 0xFFFF);
       str.append ("; e_version: ").append (e_version & 0xFFFF);
@@ -190,10 +201,10 @@ class SectionFinder
     Elf32_Ehdr ehdr = new Elf32_Ehdr ();
     ehdr.read (f);
     if (ehdr.e_ident[0] != ELFMAG0 || ehdr.e_ident[1] != ELFMAG1
-	|| ehdr.e_ident[2] != ELFMAG2 || ehdr.e_ident[3] != ELFMAG3)
+		|| ehdr.e_ident[2] != ELFMAG2 || ehdr.e_ident[3] != ELFMAG3)
       {
-	f.close ();
-	throw new IOException (file + ": not an ELF file");
+		f.close ();
+		throw new IOException (file + ": not an ELF file");
       }
     if (Configuration.DEBUG)
       logger.log (DEBUG, "read ELF header: {0}", ehdr);
@@ -212,48 +223,48 @@ class SectionFinder
 
     outer: for (int i = 0; i < ehdr.e_shnum; i++)
       {
-	// Read information about this section.
-	f.seek (ehdr.e_shoff + (i * Elf32_Shdr.sizeof ()));
-	shdr.read (f);
-	if (Configuration.DEBUG)
-	  logger.log (DEBUG, "checking section: {0}", shdr);
+		// Read information about this section.
+		f.seek (ehdr.e_shoff + (i * Elf32_Shdr.sizeof ()));
+		shdr.read (f);
+		if (Configuration.DEBUG)
+		  logger.log (DEBUG, "checking section: {0}", shdr);
 
-	// Read the section name from the string table.
-	f.seek (strtabhdr.sh_offset + shdr.sh_name);
-	f.readFully (buf);
-	if (Configuration.DEBUG)
-	  logger.log (DEBUG, "this section is \"{0}\"", new String (buf));
-	for (int j = 0; j < target_bytes.length; j++)
-	  if (target_bytes[j] != buf[j])
-	    continue outer;
-	if (buf[buf.length - 1] != '\0')
-	  continue;
+		// Read the section name from the string table.
+		f.seek (strtabhdr.sh_offset + shdr.sh_name);
+		f.readFully (buf);
+		if (Configuration.DEBUG)
+		  logger.log (DEBUG, "this section is \"{0}\"", new String (buf));
+		for (int j = 0; j < target_bytes.length; j++)
+		  if (target_bytes[j] != buf[j])
+			continue outer;
+		if (buf[buf.length - 1] != '\0')
+		  continue;
 
-	if (Configuration.DEBUG)
-	  logger.log (DEBUG, "found section {0}: {1}", new Object[]
-	    { section, shdr });
-	found = true;
-	break;
+		if (Configuration.DEBUG)
+		  logger.log (DEBUG, "found section {0}: {1}", new Object[]
+			{ section, shdr });
+		found = true;
+		break;
       }
 
     if (!found)
       {
-	f.close ();
-	throw new IOException ("no section " + section + " found in " + file);
+		f.close ();
+		throw new IOException ("no section " + section + " found in " + file);
       }
 
     try
       {
-	FileChannel chan = f.getChannel ();
-	MappedByteBuffer buffer = chan.map (FileChannel.MapMode.READ_ONLY,
-					    shdr.sh_offset, shdr.sh_size);
-	buffer.order (ByteOrder.nativeOrder ());
-	chan.close ();
-	return buffer;
+		FileChannel chan = f.getChannel ();
+		MappedByteBuffer buffer = chan.map (FileChannel.MapMode.READ_ONLY,
+											shdr.sh_offset, shdr.sh_size);
+		buffer.order (ByteOrder.nativeOrder ());
+		chan.close ();
+		return buffer;
       }
     finally
       {
-	f.close ();
+		f.close ();
       }
   }
 
@@ -271,7 +282,7 @@ class SectionFinder
       return f.readInt ();
     else
       return (f.readUnsignedByte () | (f.readUnsignedByte () << 8)
-	      | (f.readUnsignedByte () << 16) | (f.readUnsignedByte () << 24));
+			  | (f.readUnsignedByte () << 16) | (f.readUnsignedByte () << 24));
   }
 
   private static long readUWord (RandomAccessFile f) throws IOException
@@ -280,9 +291,9 @@ class SectionFinder
       return (long) f.readInt () & 0xFFFFFFFFL;
     else
       {
-	long l = (f.readUnsignedByte () | (f.readUnsignedByte () << 8)
-		  | (f.readUnsignedByte () << 16) | (f.readUnsignedByte () << 24));
-	return (l & 0xFFFFFFFFL);
+		long l = (f.readUnsignedByte () | (f.readUnsignedByte () << 8)
+				  | (f.readUnsignedByte () << 16) | (f.readUnsignedByte () << 24));
+		return (l & 0xFFFFFFFFL);
       }
   }
 }

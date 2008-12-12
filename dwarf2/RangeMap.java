@@ -1,20 +1,24 @@
 /* RangeMap.java -- map ranges of long values to objects.
-   Copyright (C) 2006  C. Scott Marshall <casey.s.marshall@gmail.com>
+   Copyright (C) 2006, 2008  Casey Marshall
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or (at
-your option) any later version.
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-02110-1301 USA  */
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 
 
 package dwarf2;
@@ -44,13 +48,13 @@ public final class RangeMap
     SortedMap m = ranges.tailMap (r1);
     if (!m.isEmpty ())
       {
-	Range r2 = (Range) m.firstKey ();
-	if (r2.overlaps (r1))
-	  {
-	    ranges.remove (r2);
-	    ranges.put (r1.mergeWith (r2), value);
-	    return;
-	  }
+		Range r2 = (Range) m.firstKey ();
+		if (r2.overlaps (r1))
+		  {
+			ranges.remove (r2);
+			ranges.put (r1.mergeWith (r2), value);
+			return;
+		  }
       }
     ranges.put (r1, value);
   }
@@ -91,10 +95,10 @@ public final class RangeMap
       Range r2 = (Range) o2;
 
       if (r1.overlaps (r2))
-	return 0;
+		return 0;
 
       if (ucomp (r1.begin, r2.end) > 0)
-	return 1;
+		return 1;
       return -1;
     }
   }
@@ -107,7 +111,7 @@ public final class RangeMap
     Range (final long begin, final long end)
     {
       if (ucomp (begin, end) > 0)
-	throw new IllegalArgumentException ("begin is not less than end (unsigned)");
+		throw new IllegalArgumentException ("begin is not less than end (unsigned)");
       this.begin = begin;
       this.end = end;
     }
@@ -115,19 +119,19 @@ public final class RangeMap
     boolean contains (long value)
     {
       return (ucomp (begin, value) <= 0
-	      && ucomp (end, value) >= 0);
+			  && ucomp (end, value) >= 0);
     }
 
     boolean contains (Range that)
     {
       return (ucomp (this.begin, that.begin) <= 0
-	      && ucomp (this.end, that.end) >= 0);
+			  && ucomp (this.end, that.end) >= 0);
     }
 
     public boolean equals (Object o)
     {
       if (! (o instanceof Range))
-	return false;
+		return false;
       return equals ((Range) o);
     }
 
@@ -139,23 +143,23 @@ public final class RangeMap
     boolean overlaps (Range that)
     {
       return ((ucomp (this.begin, that.begin) <= 0
-	       && ucomp (this.end, that.begin) >= 0)
-	      || (ucomp (this.end, that.begin) >= 0
-		  && ucomp (this.end, that.end) <= 0)
-	      || (ucomp (this.begin, that.end) <= 0
-		  && ucomp (this.end, that.end) >= 0));
+			   && ucomp (this.end, that.begin) >= 0)
+			  || (ucomp (this.end, that.begin) >= 0
+				  && ucomp (this.end, that.end) <= 0)
+			  || (ucomp (this.begin, that.end) <= 0
+				  && ucomp (this.end, that.end) >= 0));
     }
 
     Range mergeWith (Range that)
     {
       if (!overlaps (that))
-	throw new IllegalArgumentException ("ranges don't overlap this=" + this + " that=" + that);
+		throw new IllegalArgumentException ("ranges don't overlap this=" + this + " that=" + that);
       long begin = this.begin;
       if (ucomp (begin, that.begin) > 0)
-	begin = that.begin;
+		begin = that.begin;
       long end = this.end;
       if (ucomp (end, that.end) < 0)
-	end = that.end;
+		end = that.end;
       return new Range (begin, end);
     }
 
@@ -167,14 +171,14 @@ public final class RangeMap
       String s = Long.toHexString (begin);
       int n = 16 - s.length ();
       while ((n--) > 0)
-	str.append ('0');
+		str.append ('0');
       str.append (s);
       str.append (", 0x");
 
       s = Long.toHexString (end);
       n = 16 - s.length ();
       while ((n--) > 0)
-	str.append ('0');
+		str.append ('0');
       str.append (s);
       str.append (")");
       return str.toString ();
@@ -188,25 +192,25 @@ public final class RangeMap
 
     if (l1 < 0)
       {
-	if (l2 < 0)
-	  {
-	    if (l1 < l2)
-	      return 1;
-	    else
-	      return -1;
-	  }
-	return 1;
+		if (l2 < 0)
+		  {
+			if (l1 < l2)
+			  return 1;
+			else
+			  return -1;
+		  }
+		return 1;
       }
     else
       {
-	if (l2 >= 0)
-	  {
-	    if (l1 < l2)
-	      return -1;
-	    else
-	      return 1;
-	  }
-	return -1;
+		if (l2 >= 0)
+		  {
+			if (l1 < l2)
+			  return -1;
+			else
+			  return 1;
+		  }
+		return -1;
       }
   }
 }

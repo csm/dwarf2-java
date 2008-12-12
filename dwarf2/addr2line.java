@@ -13,26 +13,26 @@ public class addr2line
 
     while ((line = in.readLine ()) != null)
       {
-	if (line.startsWith ("0x"))
-	  line = line.substring (2);
-	long addr = 0;
-	try
-	  {
-	    addr = Long.parseLong (line, 16);
-	  }
-	catch (Exception x)
-	  {
-	    System.out.println ("??:??");
-	    continue;
-	  }
+		if (line.startsWith ("0x"))
+		  line = line.substring (2);
+		long addr = 0;
+		try
+		  {
+			addr = Long.parseLong (line, 16);
+		  }
+		catch (Exception x)
+		  {
+			System.out.println ("??:??");
+			continue;
+		  }
 
-	finder.lookup (addr);
-	String file = finder.getSourceFile ();
-	int lineno = finder.getLineNumber ();
-	if (file != null && lineno >= 0)
-	  System.out.println (file + ":" + lineno);
-	else
-	  System.out.println ("??:??");
+		finder.lookup (addr);
+		String file = finder.getSourceFile ();
+		int lineno = finder.getLineNumber ();
+		if (file != null && lineno >= 0)
+		  System.out.println (file + ":" + lineno);
+		else
+		  System.out.println ("??:??");
       }
   }
 }
