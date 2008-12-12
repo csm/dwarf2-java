@@ -1,0 +1,23 @@
+               A DWARF-2 debug_line Reader in Java
+
+This is an interpreter for the byte codes of the .debug_line sections
+in DWARF-2 debug info. All boring details aside, what the .debug_line
+byte codes are for is mapping program counter addresses to source file
+names and line numbers. So if you have a stack trace of program
+counter values, you can look up what statements in the original
+program they correspond to. Debuggers like GDB read this section when
+telling you where your program crashed.
+
+This code, that I wrote, reads this information out of binary files
+(currently, 32-bit ELF is supported, but extending it should not be
+difficult).
+
+I originally intended for this to be a part of GCJ, and it would
+support generating exception stack traces, by filling in the source
+file and line number, instead of the current method, which forks off
+an external process to read this information. The patch wasn't
+accepted into GCJ, and I'm not entirely sure why.
+
+But the code still exists, and may be interesting to others who are
+trying to develop GCJ-compiled code, or those who are merely curious
+about things like ELF and DWARF-2.
